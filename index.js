@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     image:String
 })
 
+//Eklenecek olan elemana ait olan eleman yapısı
 const user = mongoose.model("User",userSchema)
 
 async function main() {
@@ -40,11 +41,19 @@ app.use(express.text({ limit: "200mb" }))
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
 app.get(`/api/data`,async(req,res)=>{
-    let data;
-    await user.find().then((users) => data = users)
-    //console.log(data);
+    let data 
+    await user.find().then((users) => {
+        users.forEach((item) => {
+            let bitmap = fs.readFileSync(__dirname+item.image);
+            let base64 = Buffer.from(bitmap).toString("base64") 
+            //console.log(__dirname+item.image);
+            item.image = `data:image/png;base64,${base64}`
+            //console.log(item.image);
+        } )
+        data = users
+    })
+    
     res.status(200).json(data)
-
 });
 
 //POST
@@ -56,13 +65,13 @@ app.post('/api/data', async(req, res) => {
     let base64Image = req.body.image.split(';base64,').pop();
     
     //File folder change
-    const filePath = `/public/${imageName}.png`
+    const filePath = __dirname + `/public/${imageName}.png`
 
     //fs.mkdirSync(filePath)
     
     //Burada resmi kaydetme işlemi yapılıyor.
     //__dirname ile son dizine kadar olan yeri gosterir.
-    fs.writeFile(__dirname + filePath , base64Image, {encoding: 'base64'}, function(err) {
+    fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
         console.log('File created');
     });
     
@@ -80,12 +89,19 @@ app.post('/api/data', async(req, res) => {
 
 //DELETE
 //kullanıcı silme işlemi
-app.delete(`/api/data/:id`,(req,res) => {
+app.delete(`/api/data/:id`,async(req,res) => {
+    //Public klasörü içerisinden aynı zamanda resmi de silmemiz gerek.
     console.log("silmek için istek atıldı...");
+    let data ;
     const id = req.params.id;
-    user.deleteOne({_id:id})
+    //Burada tek elemanlı bir Array dönüyor
+    await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => data = singleUser)
+    console.log(data);
+    await user.deleteOne({_id:id})
     .then(() => console.log("user deleted"))
     .catch((err) => console.log(err))
+    //Kullanıcı silme işlemi yapıldığı için resmi de silme işlemi yapılmaktadır.
+    fs.rmSync(__dirname+data[0].image)//Tek elemanlı arrayın 0. elemanı siliniyor
     res.status(201).json("succes");
 })
 
@@ -94,7 +110,6 @@ app.get(`/api/data/user/:id`,async(req,res) => {
     console.log("kullanıcı detay sayfası için veri");
     let data; 
     const userID = req.params.id;
-    //console.log(userID);
     await user.find().where("_id").equals(`${userID}`).exec().then((singleUser) => data = singleUser)
     res.status(201).json(data)
 })
@@ -104,10 +119,8 @@ app.get(`/api/data/user/:id`,async(req,res) => {
 app.get(`/api/data/:q`,async(req,res) => {
     let data;
     const searchText = req.params.q
-    //console.log(searchText);
     console.log("arama yapıldı");
     await user.find().where("name").equals(`${searchText}`).exec().then((users) => data = users)
-    //console.log(data);
     res.status(200).json(data)
 })
 
