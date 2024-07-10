@@ -4,6 +4,8 @@ const cors = require("cors")//herhangi bir veri aktarımı öncesinde talebin on
 //const mongodb = require("mongodb")//Verileri bir veri tabanında tutmak için kullanılacak
 const mongoose = require("mongoose")//Bu sayede hem veritabanı oluşturuyoruz hem de veri ekleme ve çıkartma işlemi yapıyoruz.
 
+const uuid = require("uuid")
+
 const fs = require("fs")
 
 //***************************** */
@@ -35,7 +37,7 @@ app.use(express.json({limit:"50mb"})) //Bu limit değerleri sayesinde verilerin 
 app.use(express.text({ limit: "200mb" }))
 
 
-//GET
+//GET ALL USER
 //Kullanıcıları listeleme işlemi...
 app.get(`/api/data`,async(req,res)=>{
     let data;
@@ -49,10 +51,18 @@ app.get(`/api/data`,async(req,res)=>{
 //Burada yeni veri ekleme işlemi yapılmaktadır.
 app.post('/api/data', async(req, res) => {
     // req.body.name ile request 'in body sindeki json nesneye erişilir.
-    
+    const imageName = uuid.v4()
     //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
     let base64Image = req.body.image.split(';base64,').pop();
-    fs.writeFile('image.png', base64Image, {encoding: 'base64'}, function(err) {
+    
+    //File folder change
+    const filePath = `/public/${imageName}.png`
+
+    //fs.mkdirSync(filePath)
+    
+    //Burada resmi kaydetme işlemi yapılıyor.
+    //__dirname ile son dizine kadar olan yeri gosterir.
+    fs.writeFile(__dirname + filePath , base64Image, {encoding: 'base64'}, function(err) {
         console.log('File created');
     });
     
@@ -60,7 +70,7 @@ app.post('/api/data', async(req, res) => {
         name:req.body.name,
         email:req.body.email,
         password:req.body.password,
-        image:req.body.image
+        image:`/public/${imageName}.png`
     })
     newUser.save().then(() => console.log("saved user")).catch((err) => console.log(err))
     
