@@ -15,9 +15,13 @@ main().catch(err => console.log(err));
 const userSchema = new mongoose.Schema({
     id:Number,
     name:String,
+    surname:String,
     email:String,
     password:String,
-    image:String
+    image:String,
+    gender:Number,
+    birthDay:String,
+    phoneNumber:Number
 })
 
 //Eklenecek olan elemana ait olan eleman yapısı
@@ -42,6 +46,7 @@ app.use(express.text({ limit: "200mb" }))
 //Kullanıcıları listeleme işlemi...
 app.get(`/api/data`,async(req,res)=>{
     let data 
+    //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
     await user.find().then((users) => {
         users.forEach((item) => {
             let bitmap = fs.readFileSync(__dirname+item.image);
@@ -77,9 +82,13 @@ app.post('/api/data', async(req, res) => {
     
     const newUser = new user({
         name:req.body.name,
+        surname:req.body.surname,
         email:req.body.email,
         password:req.body.password,
-        image:`/public/${imageName}.png`
+        image:`/public/${imageName}.png`,
+        phoneNumber:req.body.phoneNumber,
+        birthDay:req.body.birthDay,
+        gender:req.body.gender,
     })
     newUser.save().then(() => console.log("saved user")).catch((err) => console.log(err))
     
@@ -96,7 +105,7 @@ app.delete(`/api/data/:id`,async(req,res) => {
     const id = req.params.id;
     //Burada tek elemanlı bir Array dönüyor
     await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => data = singleUser)
-    console.log(data);
+    //console.log(data);
     await user.deleteOne({_id:id})
     .then(() => console.log("user deleted"))
     .catch((err) => console.log(err))
@@ -106,11 +115,21 @@ app.delete(`/api/data/:id`,async(req,res) => {
 })
 
 //SINGLE USER
+//ID bilgisi ile bir kullanıcıya ait bilgilerin gelmesini sağlayan yapı.
 app.get(`/api/data/user/:id`,async(req,res) => {
     console.log("kullanıcı detay sayfası için veri");
     let data; 
     const userID = req.params.id;
-    await user.find().where("_id").equals(`${userID}`).exec().then((singleUser) => data = singleUser)
+    await user.find().where("_id").equals(`${userID}`).exec().then((singleUser) => {
+        singleUser.forEach((item) => {
+            let bitmap = fs.readFileSync(__dirname+item.image);
+            let base64 = Buffer.from(bitmap).toString("base64") 
+            //console.log(__dirname+item.image);
+            item.image = `data:image/png;base64,${base64}`
+            //console.log(item.image);
+        } )
+        data = singleUser
+    })
     res.status(201).json(data)
 })
 
@@ -120,7 +139,16 @@ app.get(`/api/data/:q`,async(req,res) => {
     let data;
     const searchText = req.params.q
     console.log("arama yapıldı");
-    await user.find().where("name").equals(`${searchText}`).exec().then((users) => data = users)
+    await user.find().where("name").equals(`${searchText}`).exec().then((users) => {
+        users.forEach((item) => {
+            let bitmap = fs.readFileSync(__dirname+item.image);
+            let base64 = Buffer.from(bitmap).toString("base64") 
+            //console.log(__dirname+item.image);
+            item.image = `data:image/png;base64,${base64}`
+            //console.log(item.image);
+        } )
+        data = users
+    })
     res.status(200).json(data)
 })
 
