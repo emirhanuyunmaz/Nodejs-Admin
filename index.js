@@ -96,6 +96,48 @@ app.post('/api/data', async(req, res) => {
     res.status(201).json(newUser);
 });
 
+//UPDATE
+//Kayıtlı bir kullanıcıyı güncelleme işlemi 
+app.post("/api/data/:id",async(req,res) => {
+    console.log("Güncelleme için istek atıldı");
+    const id = req.params.id;
+    let imageName ;
+    await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => {
+        imageName = singleUser[0].image
+    })
+
+    //*********************** */
+    
+    //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
+    let base64Image = req.body.image.split(';base64,').pop();
+    
+    //File folder change resmin ismi güncelleme işleminde değişiklik yapıldı
+    const filePath = __dirname + `${imageName}`
+    
+    //Burada resmi kaydetme işlemi yapılıyor.
+    //__dirname ile son dizine kadar olan yeri gosterir.
+    fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
+        console.log('File created');
+    });
+    
+    //*********************** */
+
+    let data = {
+        name:req.body.name,
+        surname:req.body.surname,
+        email:req.body.email,
+        password:req.body.password,
+        phoneNumber:req.body.phoneNumber,
+        birthDay:req.body.birthDay,
+        gender:req.body.gender,
+        image:`${imageName}`,
+    }
+    //console.log(req.body);
+    await user.findByIdAndUpdate({_id:id},data)
+    res.status(201).json("succes")
+})
+
+
 //DELETE
 //kullanıcı silme işlemi
 app.delete(`/api/data/:id`,async(req,res) => {
