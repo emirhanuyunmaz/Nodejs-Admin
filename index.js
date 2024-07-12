@@ -42,28 +42,190 @@ app.use(cors())
 app.use(express.json({limit:"50mb"})) //Bu limit değerleri sayesinde verilerin belli bir boyuta kada kabul etmesini sağlar
 app.use(express.text({ limit: "200mb" }))
 
-//GET USER LENGTH
+//try - catch yapılarının eklenmesi
 
+//GET USER LENGTH
+//Tüm kullanıcıların sayısını veren ve sayfalama da kullanılan yapı
 app.get("/api/data/length",async(req,res)=>{
-    let data = {
-        length : 0
+    try{
+        let data = {
+            length : 0
+        }
+        await user.find().then((users) => data.length = users.length )
+        res.status(200).json(data)
+    }catch(e){
+        res.status(404).json(e)
     }
-    await user.find().then((users) => data.length = users.length )
-    res.status(200).json(data)
 })
 
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
 app.get(`/api/data/:page`,async(req,res)=>{
     //Sayfalama işlemi için her sayfalamada 6 kullanıcı çekilecek.
-    let data 
-    //console.log(req.params.page);
-    const page = req.params.page
-    //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
-    //skip fonk başlangıç değerini belirler.
-    //limit fonk kaç adet çekileceğini belirler.
-    if(page > 0){
-        await user.find().skip((page-1)*6).limit(6).then((users) => {
+    try{
+        let data 
+        //console.log(req.params.page);
+        const page = req.params.page
+        //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
+        //skip fonk başlangıç değerini belirler.
+        //limit fonk kaç adet çekileceğini belirler.
+        if(page > 0){
+            await user.find().skip((page-1)*6).limit(6).then((users) => {
+                users.forEach((item) => {
+                    let bitmap = fs.readFileSync(__dirname+item.image);
+                    let base64 = Buffer.from(bitmap).toString("base64") 
+                    //console.log(__dirname+item.image);
+                    item.image = `data:image/png;base64,${base64}`
+                    //console.log(item.image);
+                } )
+                data = users
+            })
+        }
+        res.status(200).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+});
+
+
+//POST
+//Burada yeni veri ekleme işlemi yapılmaktadır.
+app.post('/api/data', async(req, res) => {
+    try{
+        // req.body.name ile request 'in body sindeki json nesneye erişilir.
+        const imageName = uuid.v4()
+        //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
+        let base64Image = req.body.image.split(';base64,').pop();
+        
+        //File folder change
+        const filePath = __dirname + `/public/${imageName}.png`
+
+        //fs.mkdirSync(filePath)
+        
+        //Burada resmi kaydetme işlemi yapılıyor.
+        //__dirname ile son dizine kadar olan yeri gosterir.
+        fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
+            console.log('File created');
+        });
+        
+        const newUser = new user({
+            name:req.body.name,
+            surname:req.body.surname,
+            email:req.body.email,
+            password:req.body.password,
+            image:`/public/${imageName}.png`,
+            phoneNumber:req.body.phoneNumber,
+            birthDay:req.body.birthDay,
+            gender:req.body.gender,
+        })
+        newUser.save().then(() => console.log("saved user")).catch((err) => console.log(err))
+        
+        console.log("eklemek için istek atıldı");
+        res.status(201).json(newUser);
+    }catch(e){
+        res.status(404).json(e)
+    }
+});
+
+//UPDATE
+//Kayıtlı bir kullanıcıyı güncelleme işlemi 
+app.post("/api/data/:id",async(req,res) => {
+    console.log("Güncelleme için istek atıldı");
+    const id = req.params.id;
+    try{
+        let imageName ;
+        await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => {
+            imageName = singleUser[0].image
+        })
+
+        //*********************** */
+        
+        //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
+        let base64Image = req.body.image.split(';base64,').pop();
+        
+        //File folder change resmin ismi güncelleme işleminde değişiklik yapıldı
+        //__dirname ile son dizine kadar olan yeri gosterir.
+        const filePath = __dirname + `${imageName}`
+        
+        //Burada resmi kaydetme işlemi yapılıyor.
+        fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
+            console.log('File created');
+        });
+        
+        //************************/
+
+        let data = {
+            name:req.body.name,
+            surname:req.body.surname,
+            email:req.body.email,
+            password:req.body.password,
+            phoneNumber:req.body.phoneNumber,
+            birthDay:req.body.birthDay,
+            gender:req.body.gender,
+            image:`${imageName}`,
+        }
+        //console.log(req.body);
+        await user.findByIdAndUpdate({_id:id},data)
+        res.status(201).json("succes")
+    }catch(e){
+        res.status(404).json(e)
+    }
+})
+
+
+//DELETE
+//kullanıcı silme işlemi
+app.delete(`/api/data/:id`,async(req,res) => {
+    //Public klasörü içerisinden aynı zamanda resmi de silmemiz gerek.
+    console.log("silmek için istek atıldı...");
+    try{
+        let data ;
+        const id = req.params.id;
+        //Burada tek elemanlı bir Array dönüyor
+        await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => data = singleUser)
+        //console.log(data);
+        await user.deleteOne({_id:id})
+        .then(() => console.log("user deleted"))
+        .catch((err) => console.log(err))
+        //Kullanıcı silme işlemi yapıldığı için resmi de silme işlemi yapılmaktadır.
+        fs.rmSync(__dirname+data[0].image)//Tek elemanlı arrayın 0. elemanı siliniyor
+        res.status(201).json("succes");
+    }catch(e){
+        res.status(404).json(e)
+    }
+})
+
+//SINGLE USER
+//ID bilgisi ile bir kullanıcıya ait bilgilerin gelmesini sağlayan yapı.
+app.get(`/api/data/user/:id`,async(req,res) => {
+    console.log("kullanıcı detay sayfası için veri");
+    let data; 
+    const userID = req.params.id;
+    try{
+        await user.find().where("_id").equals(`${userID}`).exec().then((singleUser) => {
+            singleUser.forEach((item) => {
+                let bitmap = fs.readFileSync(__dirname+item.image);
+                let base64 = Buffer.from(bitmap).toString("base64") 
+                //console.log(__dirname+item.image);
+                item.image = `data:image/png;base64,${base64}`
+                //console.log(item.image);
+            } )
+            data = singleUser
+        })
+        res.status(201).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+})
+
+//SEARCH
+//Kullanıcılar arasında ismi girilen kişiyi bulma işlemi.
+app.get(`/api/data/search/:q`,async(req,res) => {
+    let data;
+    const searchText = req.params.q
+    console.log("arama yapıldı");
+    try{
+        await user.find().where("name").equals(`${searchText}`).exec().then((users) => {
             users.forEach((item) => {
                 let bitmap = fs.readFileSync(__dirname+item.image);
                 let base64 = Buffer.from(bitmap).toString("base64") 
@@ -73,142 +235,10 @@ app.get(`/api/data/:page`,async(req,res)=>{
             } )
             data = users
         })
+        res.status(200).json(data)
+    }catch(e){
+        res.status(404).json(e)
     }
-    res.status(200).json(data)
-});
-
-
-//POST
-//Burada yeni veri ekleme işlemi yapılmaktadır.
-app.post('/api/data', async(req, res) => {
-    // req.body.name ile request 'in body sindeki json nesneye erişilir.
-    const imageName = uuid.v4()
-    //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
-    let base64Image = req.body.image.split(';base64,').pop();
-    
-    //File folder change
-    const filePath = __dirname + `/public/${imageName}.png`
-
-    //fs.mkdirSync(filePath)
-    
-    //Burada resmi kaydetme işlemi yapılıyor.
-    //__dirname ile son dizine kadar olan yeri gosterir.
-    fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
-        console.log('File created');
-    });
-    
-    const newUser = new user({
-        name:req.body.name,
-        surname:req.body.surname,
-        email:req.body.email,
-        password:req.body.password,
-        image:`/public/${imageName}.png`,
-        phoneNumber:req.body.phoneNumber,
-        birthDay:req.body.birthDay,
-        gender:req.body.gender,
-    })
-    newUser.save().then(() => console.log("saved user")).catch((err) => console.log(err))
-    
-    console.log("eklemek için istek atıldı");
-    res.status(201).json(newUser);
-});
-
-//UPDATE
-//Kayıtlı bir kullanıcıyı güncelleme işlemi 
-app.post("/api/data/:id",async(req,res) => {
-    console.log("Güncelleme için istek atıldı");
-    const id = req.params.id;
-    let imageName ;
-    await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => {
-        imageName = singleUser[0].image
-    })
-
-    //*********************** */
-    
-    //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
-    let base64Image = req.body.image.split(';base64,').pop();
-    
-    //File folder change resmin ismi güncelleme işleminde değişiklik yapıldı
-    //__dirname ile son dizine kadar olan yeri gosterir.
-    const filePath = __dirname + `${imageName}`
-    
-    //Burada resmi kaydetme işlemi yapılıyor.
-    fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
-        console.log('File created');
-    });
-    
-    //************************/
-
-    let data = {
-        name:req.body.name,
-        surname:req.body.surname,
-        email:req.body.email,
-        password:req.body.password,
-        phoneNumber:req.body.phoneNumber,
-        birthDay:req.body.birthDay,
-        gender:req.body.gender,
-        image:`${imageName}`,
-    }
-    //console.log(req.body);
-    await user.findByIdAndUpdate({_id:id},data)
-    res.status(201).json("succes")
-})
-
-
-//DELETE
-//kullanıcı silme işlemi
-app.delete(`/api/data/:id`,async(req,res) => {
-    //Public klasörü içerisinden aynı zamanda resmi de silmemiz gerek.
-    console.log("silmek için istek atıldı...");
-    let data ;
-    const id = req.params.id;
-    //Burada tek elemanlı bir Array dönüyor
-    await user.find().where("_id").equals(`${id}`).exec().then((singleUser) => data = singleUser)
-    //console.log(data);
-    await user.deleteOne({_id:id})
-    .then(() => console.log("user deleted"))
-    .catch((err) => console.log(err))
-    //Kullanıcı silme işlemi yapıldığı için resmi de silme işlemi yapılmaktadır.
-    fs.rmSync(__dirname+data[0].image)//Tek elemanlı arrayın 0. elemanı siliniyor
-    res.status(201).json("succes");
-})
-
-//SINGLE USER
-//ID bilgisi ile bir kullanıcıya ait bilgilerin gelmesini sağlayan yapı.
-app.get(`/api/data/user/:id`,async(req,res) => {
-    console.log("kullanıcı detay sayfası için veri");
-    let data; 
-    const userID = req.params.id;
-    await user.find().where("_id").equals(`${userID}`).exec().then((singleUser) => {
-        singleUser.forEach((item) => {
-            let bitmap = fs.readFileSync(__dirname+item.image);
-            let base64 = Buffer.from(bitmap).toString("base64") 
-            //console.log(__dirname+item.image);
-            item.image = `data:image/png;base64,${base64}`
-            //console.log(item.image);
-        } )
-        data = singleUser
-    })
-    res.status(201).json(data)
-})
-
-//SEARCH
-//Kullanıcılar arasında ismi girilen kişiyi bulma işlemi.
-app.get(`/api/data/:q`,async(req,res) => {
-    let data;
-    const searchText = req.params.q
-    console.log("arama yapıldı");
-    await user.find().where("name").equals(`${searchText}`).exec().then((users) => {
-        users.forEach((item) => {
-            let bitmap = fs.readFileSync(__dirname+item.image);
-            let base64 = Buffer.from(bitmap).toString("base64") 
-            //console.log(__dirname+item.image);
-            item.image = `data:image/png;base64,${base64}`
-            //console.log(item.image);
-        } )
-        data = users
-    })
-    res.status(200).json(data)
 })
 
 //Server çalışması
