@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema({
 //Eklenecek olan elemana ait olan eleman yapısı
 const user = mongoose.model("User",userSchema)
 
+//Veritabanına bağlanma işlemi.
 async function main() {
     await mongoose.connect('mongodb://127.0.0.1:27017/test').then(() => console.log("MongoDB connected"));
 }
@@ -41,25 +42,41 @@ app.use(cors())
 app.use(express.json({limit:"50mb"})) //Bu limit değerleri sayesinde verilerin belli bir boyuta kada kabul etmesini sağlar
 app.use(express.text({ limit: "200mb" }))
 
+//GET USER LENGTH
+
+app.get("/api/data/length",async(req,res)=>{
+    let data = {
+        length : 0
+    }
+    await user.find().then((users) => data.length = users.length )
+    res.status(200).json(data)
+})
 
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
-app.get(`/api/data`,async(req,res)=>{
+app.get(`/api/data/:page`,async(req,res)=>{
+    //Sayfalama işlemi için her sayfalamada 6 kullanıcı çekilecek.
     let data 
+    //console.log(req.params.page);
+    const page = req.params.page
     //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
-    await user.find().then((users) => {
-        users.forEach((item) => {
-            let bitmap = fs.readFileSync(__dirname+item.image);
-            let base64 = Buffer.from(bitmap).toString("base64") 
-            //console.log(__dirname+item.image);
-            item.image = `data:image/png;base64,${base64}`
-            //console.log(item.image);
-        } )
-        data = users
-    })
-    
+    //skip fonk başlangıç değerini belirler.
+    //limit fonk kaç adet çekileceğini belirler.
+    if(page > 0){
+        await user.find().skip((page-1)*6).limit(6).then((users) => {
+            users.forEach((item) => {
+                let bitmap = fs.readFileSync(__dirname+item.image);
+                let base64 = Buffer.from(bitmap).toString("base64") 
+                //console.log(__dirname+item.image);
+                item.image = `data:image/png;base64,${base64}`
+                //console.log(item.image);
+            } )
+            data = users
+        })
+    }
     res.status(200).json(data)
 });
+
 
 //POST
 //Burada yeni veri ekleme işlemi yapılmaktadır.
@@ -112,15 +129,15 @@ app.post("/api/data/:id",async(req,res) => {
     let base64Image = req.body.image.split(';base64,').pop();
     
     //File folder change resmin ismi güncelleme işleminde değişiklik yapıldı
+    //__dirname ile son dizine kadar olan yeri gosterir.
     const filePath = __dirname + `${imageName}`
     
     //Burada resmi kaydetme işlemi yapılıyor.
-    //__dirname ile son dizine kadar olan yeri gosterir.
     fs.writeFile(filePath , base64Image, {encoding: 'base64'}, function(err) {
         console.log('File created');
     });
     
-    //*********************** */
+    //************************/
 
     let data = {
         name:req.body.name,
