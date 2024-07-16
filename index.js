@@ -6,7 +6,7 @@ const mongoose = require("mongoose")//Bu sayede hem veritabanı oluşturuyoruz h
 
 const uuid = require("uuid")
 
-const fs = require("fs")
+const fs = require("fs") 
 
 //***************************** */
 main().catch(err => console.log(err));
@@ -57,6 +57,68 @@ app.get("/api/data/length",async(req,res)=>{
         res.status(404).json(e)
     }
 })
+
+//Veri gösterme işlemi
+app.get("/api/data/product",(req,res) => {
+    console.log("Product sayfasına istek atıldı")
+    res.status(201).json("succes")
+})
+
+//GET ALL USER 2
+//Tüm verileri çekme işlemi.Sayfalama olmadan
+app.get("/api/data/allData2",async(req,res) => {
+
+    let data = []
+
+    await user.find().then((users) => {
+        users.forEach((item) => {
+            let bitmap = fs.readFileSync(__dirname+item.image);
+            let base64 = Buffer.from(bitmap).toString("base64") 
+            //console.log(__dirname+item.image);
+            item.image = `data:image/png;base64,${base64}`
+            //console.log(item.image);
+        })
+        data = users
+    })
+    res.status(201).json(data)
+})
+
+
+
+//SEARCH
+//Gelen tüm verilere göre bir sayaç belirlenip sayfalama işlemi yapılabilir.
+app.get("/api/data/allData/:search" , async(req,res) => {
+    let data = []
+    //Arama işlemi ile gelen veriyi alır.
+    let searchText = req.params.search
+    // let searchPage = req.params.page
+    //
+    console.log("Arama işlemi yapıldı");
+    console.log(searchText);
+
+    try{
+        
+            await user.find().then((users) => {
+                users.forEach((item) => {
+                    if((item.name.search(new RegExp(searchText, "i")) !== -1) || (item.surname.search(new RegExp(searchText, "i")) !== -1) ){
+                        let bitmap = fs.readFileSync(__dirname+item.image);
+                        let base64 = Buffer.from(bitmap).toString("base64") 
+                        
+                        item.image = `data:image/png;base64,${base64}`
+                        
+                        data.push(item)
+                    }
+                } )
+                
+            })
+            res.status(201).json(data)
+        
+    }catch(e){
+        res.status(404).json(e)
+    }
+})
+
+
 
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
@@ -126,6 +188,7 @@ app.post('/api/data', async(req, res) => {
         res.status(404).json(e)
     }
 });
+
 
 //UPDATE
 //Kayıtlı bir kullanıcıyı güncelleme işlemi 
