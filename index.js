@@ -48,15 +48,12 @@ async function main() {
 
 //**************************** */
 
-
 const PORT = process.env.PORT || 5000;
 
 //middleware
 app.use(cors())
 app.use(express.json({limit:"50mb"})) //Bu limit değerleri sayesinde verilerin belli bir boyuta kada kabul etmesini sağlar
 app.use(express.text({ limit: "200mb" }))
-
-//try - catch yapılarının eklenmesi
 
 //GET USER LENGTH
 //Tüm kullanıcıların sayısını veren ve sayfalama da kullanılan yapı
@@ -72,28 +69,6 @@ app.get("/api/data/length",async(req,res)=>{
     }
 })
 
-//Veri gösterme işlemi
-app.get("/api/data/product",(req,res) => {
-    console.log("Product sayfasına istek atıldı")
-    res.status(201).json("succes")
-})
-
-//GET ALL USER 2
-//Tüm verileri çekme işlemi.Sayfalama olmadan
-app.get("/api/data/allData2",async(req,res) => {
-    let data = []
-    await user.find().then((users) => {
-        users.forEach((item) => {
-            let bitmap = fs.readFileSync(__dirname+item.image);
-            let base64 = Buffer.from(bitmap).toString("base64") 
-            //console.log(__dirname+item.image);
-            item.image = `data:image/png;base64,${base64}`
-            //console.log(item.image);
-        })
-        data = users
-    })
-    res.status(201).json(data)
-})
 
 //TRANSACTION - GENDER
 //Cinsiyet verilerini çekme işlemi 
@@ -105,7 +80,7 @@ app.get("/api/data/transaction/gender",async (req,res) => {
         man:0
     }
     console.log("Cinsiyet sayısını çekmek için istek atıldı");
-
+    //JWT => Token işlemleri için
     try{
         await user.find().then((dataList) => {
             dataList.forEach((item) => {
@@ -122,23 +97,64 @@ app.get("/api/data/transaction/gender",async (req,res) => {
     }catch(e){
         res.status(404).json(e)
     }
+})
+
+
+app.post("/api/data/signUp",async(req,res) => {
+    console.log("Giriş için istek atıldı")
+    let signInUser = null
+    const email = req.body.email
+    const password = req.body.password
+
+    await user.find().then((users) => {
+        users.forEach((item) => {
+            if(item.email === email && item.password === password){
+                console.log("Kullanıcı girişi başarılı");
+                signInUser = item
+                res.status(201).json("succes")
+            }
+        })
+
+        if(signInUser === null ){
+            console.log("Kullanıcı bulunamadı");
+            res.status(201).json("Kullanici Bulunamadi")    
+        }
+        
+    })
+
+    
 
 })
 
 
+
+//TRANSACTION
+////Filtre ile sadece bir etkinliğe göre veri çekme
+
+
 //TRANSACTION 
 //Değişiklik yapılan kullanıcıları çekme işlemi.
-app.get("/api/data/transaction",async (req,res) => {
+app.get("/api/data/transaction/:q",async (req,res) => {
     let data ;
     console.log("İşlemleri çekmek için istek atıldı");
+    let q = req.params.q
+    console.log("TRANSACTION Q::"+q);
+    if(q !== "All"){
+        try{
+            await transaction.find().where("transaction").equals(q).sort("-transactionTime").exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
+    }else{
+        try{
+            await transaction.find().sort("-transactionTime").exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
 
-    try{
-        await transaction.find().then((dataList) => data = dataList).catch(() => console.log("data get err"))
-        res.status(201).json(data)
-    }catch(e){
-        res.status(404).json(e)
     }
-
 })
 
 //TRANSACTION  
@@ -163,8 +179,6 @@ app.post("/api/data/transaction",(req,res) => {
     }
 
 })
-
-
 
 //SEARCH
 //DB içerisindeki tüm verilerin çekilmesi işlemi ...
