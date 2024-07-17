@@ -11,7 +11,7 @@ const fs = require("fs")
 //***************************** */
 main().catch(err => console.log(err));
 
-//Resim ekleme işlemi için yeni bir yer eklenecek
+//Kullanıcı ekleme işlemi için kullanılacak şema
 const userSchema = new mongoose.Schema({
     id:Number,
     name:String,
@@ -24,12 +24,26 @@ const userSchema = new mongoose.Schema({
     phoneNumber:Number
 })
 
+//yapılan son işlemleri tutacak veri şeması
+const transactionSchema = new mongoose.Schema({
+    id:String,
+    name:String,
+    surname:String,
+    email:String,
+    transaction:String,
+    transactionTime:Number
+})
+
 //Eklenecek olan elemana ait olan eleman yapısı
 const user = mongoose.model("User",userSchema)
+//Yapılan işlemleri kaydetme işlemi
+const transaction = mongoose.model("Transaction",transactionSchema)
 
 //Veritabanına bağlanma işlemi.
 async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/test').then(() => console.log("MongoDB connected"));
+    await mongoose.connect('mongodb://127.0.0.1:27017/test').then(() => console.log("MongoDB User connected"));
+    // await mongoose.connect('mongodb://127.0.0.1:27017/').then(() => console.log("MongoDB transaction connected"));
+
 }
 
 //**************************** */
@@ -67,9 +81,7 @@ app.get("/api/data/product",(req,res) => {
 //GET ALL USER 2
 //Tüm verileri çekme işlemi.Sayfalama olmadan
 app.get("/api/data/allData2",async(req,res) => {
-
     let data = []
-
     await user.find().then((users) => {
         users.forEach((item) => {
             let bitmap = fs.readFileSync(__dirname+item.image);
@@ -83,10 +95,79 @@ app.get("/api/data/allData2",async(req,res) => {
     res.status(201).json(data)
 })
 
+//TRANSACTION - GENDER
+//Cinsiyet verilerini çekme işlemi 
+app.get("/api/data/transaction/gender",async (req,res) => {
+    let womanCounder = 0
+    let manCounter = 0
+    let data = {
+        woman:0,
+        man:0
+    }
+    console.log("Cinsiyet sayısını çekmek için istek atıldı");
+
+    try{
+        await user.find().then((dataList) => {
+            dataList.forEach((item) => {
+                if(item.gender === 0){
+                    womanCounder ++ 
+                }else{
+                    manCounter ++
+                }
+            })
+            data.man = manCounter
+            data.woman = womanCounder
+        }).catch(() => console.log("data get err"))
+        res.status(201).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+
+})
+
+
+//TRANSACTION 
+//Değişiklik yapılan kullanıcıları çekme işlemi.
+app.get("/api/data/transaction",async (req,res) => {
+    let data ;
+    console.log("İşlemleri çekmek için istek atıldı");
+
+    try{
+        await transaction.find().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+        res.status(201).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+
+})
+
+//TRANSACTION  
+//Kullanıcıların yapmış olduğu son işlemleri kaydetme işlemi.
+app.post("/api/data/transaction",(req,res) => {
+
+    console.log("İşlem eklemek için istek atıldı");
+
+    try{
+        const newTransaction = new transaction({
+            id:req.body.id,
+            name:req.body.name,
+            surname:req.body.surname,
+            email:req.body.email,
+            transaction:req.body.transaction,
+            transactionTime:Date.now()
+        })
+        newTransaction.save().then(() => console.log("Saved transaction")).catch((err) => console.log(err))
+        res.status(201).json(newTransaction)
+    }catch(e){
+        res.status(404).json(e)
+    }
+
+})
+
 
 
 //SEARCH
-//Gelen tüm verilere göre bir sayaç belirlenip sayfalama işlemi yapılabilir.
+//DB içerisindeki tüm verilerin çekilmesi işlemi ...
 app.get("/api/data/allData/:search" , async(req,res) => {
     let data = []
     //Arama işlemi ile gelen veriyi alır.
@@ -94,31 +175,30 @@ app.get("/api/data/allData/:search" , async(req,res) => {
     // let searchPage = req.params.page
     //
     console.log("Arama işlemi yapıldı");
-    console.log(searchText);
+    // console.log(searchText);
 
     try{
-        
-            await user.find().then((users) => {
-                users.forEach((item) => {
-                    if((item.name.search(new RegExp(searchText, "i")) !== -1) || (item.surname.search(new RegExp(searchText, "i")) !== -1) ){
-                        let bitmap = fs.readFileSync(__dirname+item.image);
-                        let base64 = Buffer.from(bitmap).toString("base64") 
-                        
-                        item.image = `data:image/png;base64,${base64}`
-                        
-                        data.push(item)
-                    }
-                } )
-                
-            })
-            res.status(201).json(data)
+        await user.find().then((users) => {
+            users.forEach((item) => {
+                //Buradaki regex işlemileri ile verinin küçük büyük harf duyarsız olarak arama yapma işlemine olanak sağlar.Metin içersindeki herhangi bir yerdeki karakter dizisi ile benzerlik yakalar.
+                if((item.name.search(new RegExp(searchText, "i")) !== -1) || (item.surname.search(new RegExp(searchText, "i")) !== -1) ){
+                    let bitmap = fs.readFileSync(__dirname+item.image);
+                    let base64 = Buffer.from(bitmap).toString("base64") 
+                    
+                    item.image = `data:image/png;base64,${base64}`
+                    
+                    data.push(item)
+                }
+            } )
+            
+        })
+        res.status(201).json(data)
         
     }catch(e){
+        console.log(e);
         res.status(404).json(e)
     }
 })
-
-
 
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
@@ -189,7 +269,6 @@ app.post('/api/data', async(req, res) => {
     }
 });
 
-
 //UPDATE
 //Kayıtlı bir kullanıcıyı güncelleme işlemi 
 app.post("/api/data/:id",async(req,res) => {
@@ -252,7 +331,8 @@ app.delete(`/api/data/:id`,async(req,res) => {
         .catch((err) => console.log(err))
         //Kullanıcı silme işlemi yapıldığı için resmi de silme işlemi yapılmaktadır.
         fs.rmSync(__dirname+data[0].image)//Tek elemanlı arrayın 0. elemanı siliniyor
-        res.status(201).json("succes");
+
+        res.status(201).json(data);
     }catch(e){
         res.status(404).json(e)
     }
@@ -277,6 +357,7 @@ app.get(`/api/data/user/:id`,async(req,res) => {
         })
         res.status(201).json(data)
     }catch(e){
+        console.log(e);
         res.status(404).json(e)
     }
 })
