@@ -15,7 +15,7 @@ const userDetail = async(req,res) => {
             message:"No token "
         })
     }else{
-       const userToken = jwt.decode(token,process.env.ACCES_TOKEN_SECRET)
+    //const userToken = jwt.decode(token,process.env.ACCES_TOKEN_SECRET)
         
        //ACCES TOKEN - REFRESH TOKEN => DB kayıt ve güncelleme
        //*******************************************************/
@@ -25,17 +25,15 @@ const userDetail = async(req,res) => {
        
        //Token süresinin bitip bitmediği kontrol edildi.
        //Buradaki işlem token a ait değerleri kontrol eder ve süresinin dolup dolmadığını kontrol eder.
-       jwt.verify(token,process.env.ACCES_TOKEN_SECRET,(err,decodedToken)=>{
+       jwt.verify(token,process.env.ACCES_TOKEN_SECRET,async(err,decodedToken)=>{
         if(err){
+            //Hata kodu gönderilecek
             console.error('Token verification failed');
+            res.status(401).json(err)
         }else{
             console.log('Decoded token:', decodedToken);
-        }
-       })
-
-        // if(userToken.exp > (Date.now() / 1000).toFixed()){
             try{
-                await User.find().where("_id").equals(`${userToken.id}`).exec().then((singleUser) => {
+                await User.find().where("_id").equals(`${decodedToken.id}`).exec().then((singleUser) => {
                     singleUser.forEach((item) => {
                         let bitmap = fs.readFileSync(__dirname+"/.."+item.image);
                         let base64 = Buffer.from(bitmap).toString("base64") 
@@ -50,6 +48,8 @@ const userDetail = async(req,res) => {
                 console.log(e);
                 res.status(404).json(e)
             }       
+        }
+       })    
     }
 }
 

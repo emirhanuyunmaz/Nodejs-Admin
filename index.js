@@ -29,16 +29,16 @@ app.use(cookieParser()) //Cookie işlemleri için gerekli olan middleware
 //ADMIN
 //ROUTES
 const adminRoute = require("./routes/AdminRoutes")
-app.use("/",adminRoute)
+app.use("/api/admin",adminRoute)
 
 //DASHBOARD
 //ROUTES 
 const dashboardRoute = require("./routes/DashboardRoutes")
-app.use("/",dashboardRoute)
+app.use("/api/dashboard",dashboardRoute)
 //USER
 //ROUTES
 const userRoute = require("./routes/UserRoute")
-app.use("/",userRoute)
+app.use("/api/user",userRoute)
 
 
 //Server çalışması

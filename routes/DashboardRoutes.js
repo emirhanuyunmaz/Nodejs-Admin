@@ -1,19 +1,19 @@
 const express = require("express")
 
 const router = express.Router()
-
+//DASHBOARD
 const dashboardController = require("../controllers/DashboardController")
 
 //ADD TRANSACTİON
 //Kullanıcıların yapmış olduğu son işlemleri kaydetme işlemi.
-router.route("/api/data/transaction").post(dashboardController.addTransaction )
+router.route("/data/transaction").post(dashboardController.addTransaction )
 
 //TRANSACTION - GENDER
 //Cinsiyet verilerini çekme işlemi 
-router.route("/api/data/transaction/gender").get(dashboardController.userGender)
+router.route("/data/transaction/gender").get(dashboardController.userGender)
 
 //TRANSACTION 
 //Değişiklik yapılan kullanıcıları çekme işlemi.
-router.route("/api/data/transaction/:q").get(dashboardController.getAllTransaction)
+router.route("/data/transaction/:q").get(dashboardController.getAllTransaction)
 
 module.exports = router

@@ -8,34 +8,33 @@ const adminFuction = require("../controllers/AdminController")
 
 //POST
 //Burada yeni veri ekleme işlemi yapılmaktadır.
-router.route("/api/data").post(adminFuction.addNewUser)
+router.route("/data").post(adminFuction.addNewUser)
 //GET USER LENGTH
 //Tüm kullanıcıların sayısını veren ve sayfalama da kullanılan yapı
-router.route("/api/data/length").get(adminFuction.getUsersLength)
+router.route("/data/length").get(adminFuction.getUsersLength)
 
 //ADMIN
 //SEARCH
 //DB içerisindeki tüm verilerin çekilmesi işlemi ...
 // app.get("/api/data/allData/:search" , )
-router.route("/api/data/allData/:search").get(adminFuction.allDataSearch)
+router.route("/data/allData/:search").get(adminFuction.allDataSearch)
+
+//ADMIN
+//SINGLE USER
+router.route("/data/user/:id").get(adminFuction.singleUser)
 
 //ADMIN
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
-router.route("/api/data/:page").get(adminFuction.getAllData)
-
-//ADMIN
-//SINGLE USER
-router.route("/api/data/user/:id").get(adminFuction.singleUser)
-
+router.route("/data/:page").get(adminFuction.getAllData)
 
 //DELETE
 //kullanıcı silme işlemi
-router.route("/api/data/:id").delete(adminFuction.deleteUser)
+router.route("/data/:id").delete(adminFuction.deleteUser)
 
 //UPDATE
 //Kayıtlı bir kullanıcıyı güncelleme işlemi 
-router.route("/api/data/:id").post(adminFuction.updateUser)
+router.route("/data/user/:id").post(adminFuction.updateUser)
 
 
 
