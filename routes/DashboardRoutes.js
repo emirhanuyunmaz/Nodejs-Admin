@@ -1,8 +1,10 @@
 const express = require("express")
 
 const router = express.Router()
-//DASHBOARD
+
 const dashboardController = require("../controllers/DashboardController")
+
+//************DASHBOARD************//
 
 //ADD TRANSACTİON
 //Kullanıcıların yapmış olduğu son işlemleri kaydetme işlemi.

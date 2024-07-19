@@ -1,5 +1,6 @@
 const mongoose = require("mongoose")
 
+//****************USER MODEL****************//
 //Kullanıcı ekleme işlemi için kullanılacak şema
 const userSchema = new mongoose.Schema({
     id:Number,

@@ -1,20 +1,21 @@
 const jwt = require("jsonwebtoken")
+
 const User = require("../models/UserModel")
+
 const fs = require("fs")
 
+//Refresh token veri tabanına kaydedilerek oradan da kontrol yapılabilir.  
 
+//*************SIGN UP*******************//
 //Giriş yapan kullanıcının detay bilgileri.
 const userDetail = async(req,res) => {
+    //Refresh token ile toke yer değiştirilebilir.
     console.log("Giriş yapan kullanıcıya ait detay sayfası.")
 
     const token = req.cookies.jwt
     const token_refresh = req.cookies.jwt_refresh
     //console.log("REFRESH TOKEN::"+token_refresh);
     //REFRESH TOKEN DECODE 
-    if(token_refresh){
-        
-    }
-
 
     if( !token){
         res.status(401).json({
@@ -28,10 +29,10 @@ const userDetail = async(req,res) => {
        //Buradaki işlem token a ait değerleri kontrol eder ve süresinin dolup dolmadığını kontrol eder.
        jwt.verify(token,process.env.ACCES_TOKEN_SECRET,async(err,decodedToken)=>{
         if(err){
-
             if(token_refresh){
                 console.log("Kullanıcı token süresi doldu refresh token ile yeniden güncellendi");
                 jwt.verify(token_refresh,process.env.REFRESH_TOKEN_SECRET,async(err,decodeRefreshToken) => {
+                    console.log("REFRESH TOKEN ERR:::"+err);
                     if(err){
                         console.log("Refresh token time out");
                         res.status(401).json(err)
@@ -60,9 +61,6 @@ const userDetail = async(req,res) => {
                     }
                 })
             }
-
-            
-            
         }else{
             console.log('Decoded token:', decodedToken);
             try{
@@ -86,6 +84,7 @@ const userDetail = async(req,res) => {
     }
 }
 
+//**************SIGN IN**************//
 //Kullanıcı Giriş İşlemi 
 const userSignIn = async(req,res) => {
     console.log("Giriş için istek atıldı")
@@ -99,16 +98,17 @@ const userSignIn = async(req,res) => {
             if(item.email === email && item.password === password){
                 console.log("Kullanıcı girişi başarılı");
                 signInUser = item
+                //Token oluşturma işlemleri...
                 const userAccessToken = Token(item._id) 
                 const userRefreshToken = TokenRefresh(item._id) 
-                //Buradaki işlem ile token verisini cookie kaydetme işlemi yapıyoruz
-                // console.log("Kaydedile token::"+userToken);
-                
+            
+                //Token cookie yazılmasın işlemi..
                 res.cookie("jwt",userAccessToken,{
                     httpOnly:true,
                     maxAge: 1000 * 60 * 60 * 24
                 })
 
+                //Refresh token cookie kaydetme işlemi.
                 res.cookie("jwt_refresh",userRefreshToken,{
                     httpOnly:true,
                     maxAge: 1000 * 60 * 60 * 24
@@ -120,7 +120,7 @@ const userSignIn = async(req,res) => {
                 })
             }
         })
-
+        //Hata kodu düzenlenecek
         if(signInUser === null ){
             console.log("Kullanıcı bulunamadı");
             res.status(201).json("Kullanici Bulunamadi")    
@@ -128,18 +128,20 @@ const userSignIn = async(req,res) => {
     })
 }
 
-//CREATE - TOKEN
-//tokan oluşturma işlemi ve süresinin belirlenmesi
+//******************CREATE - TOKEN*********************//
+//token oluşturma işlemi ve süresinin belirlenmesi
 const Token = (userID) => {
     return jwt.sign({id : userID},process.env.ACCES_TOKEN_SECRET,{
-        expiresIn: "10s"
+        expiresIn: "1d"
         
     })
 }
 
+//***************CREATE - REFRESH - TOKEN********************//
+//Refresh token oluştuma işlemi ve süresinin belirlenmesi .
 const TokenRefresh = (userID) => {
     return jwt.sign({id : userID},process.env.REFRESH_TOKEN_SECRET,{
-        expiresIn: "1d"
+        expiresIn: "30d"
     })
 }
 

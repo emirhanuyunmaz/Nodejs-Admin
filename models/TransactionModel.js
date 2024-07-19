@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 
-//yapılan son işlemleri tutacak veri şeması
+//**************TRANSACTION - MODEL****************//
+//Yapılan son işlemleri tutacak veri şeması
 const transactionSchema = new mongoose.Schema({
     id:String,
     name:String,
@@ -11,6 +12,5 @@ const transactionSchema = new mongoose.Schema({
 })
 
 const Transaction = mongoose.model("Transaction",transactionSchema)
-
 
 module.exports = Transaction

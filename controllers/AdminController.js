@@ -1,10 +1,10 @@
-
 const mongoose = require("mongoose")
 const User = require("../models/UserModel")
 const fs = require("fs")
 const uuid = require("uuid")
 
-
+//*********USER - LENGTH********************/
+//Kullanıcı sayısını veren fonk.
 const getUsersLength = async(req,res)=>{
     try{
         let data = {
@@ -17,16 +17,16 @@ const getUsersLength = async(req,res)=>{
     }
 }
 
-
+//************DATA-SEARCH*************/
+//Kullanıcı içerisinden yazılan karaktere göre arama yapan fonk. 
 const allDataSearch = async(req,res) => {
     let data = []
     //Arama işlemi ile gelen veriyi alır.
     let searchText = req.params.search
     // let searchPage = req.params.page
-    //
+    
     console.log("Arama işlemi yapıldı");
-    // console.log(searchText);
-
+    
     try{
         await User.find().then((users) => {
             users.forEach((item) => {
@@ -49,10 +49,11 @@ const allDataSearch = async(req,res) => {
         res.status(404).json(e)
     }
 }
-
+//***************ALL-DATA*********************/
+//Tüm kullanıcıların çekildiği ve sayfalama yapılarak verilerin çekilmesi...
 const getAllData = async(req,res)=>{
     //Sayfalama işlemi için her sayfalamada 6 kullanıcı çekilecek.
-    // console.log("ISTEK ATILDI");
+    console.log("Tüm verileri çekmek için istek atıldı");
     try{
         let data 
         //console.log(req.params.page);
@@ -79,7 +80,8 @@ const getAllData = async(req,res)=>{
         res.status(404).json(e)
     }
 }
-
+//**************SINGLE - USER *******************/
+//Parametre olarak gelen ID bilgisine göre kullanıcıyı çeken fonk. 
 const singleUser = async(req,res) => {
     console.log("kullanıcı detay sayfası için veri");
     let data; 
@@ -102,6 +104,8 @@ const singleUser = async(req,res) => {
     }
 }
 
+//*********** DELETE - USER ********************/
+//Parametre olarak gelen ID bilgisine göre kullanıcı silme işlemi.
 const deleteUser = async(req,res) => {
     //Public klasörü içerisinden aynı zamanda resmi de silmemiz gerek.
     console.log("silmek için istek atıldı...");
@@ -110,7 +114,7 @@ const deleteUser = async(req,res) => {
         const id = req.params.id;
         //Burada tek elemanlı bir Array dönüyor
         await User.find().where("_id").equals(`${id}`).exec().then((singleUser) => data = singleUser)
-        //console.log(data);
+        
         await User.deleteOne({_id:id})
         .then(() => console.log("user deleted"))
         .catch((err) => console.log(err))
@@ -123,6 +127,8 @@ const deleteUser = async(req,res) => {
     }
 }
 
+//****************** UPDATE USER*******************//
+//Parametere olarak gelen ID bilgisine göre kullanıcıyı güncelleyen fonk.
 const updateUser = async(req,res) => {
     console.log("Güncelleme için istek atıldı");
     const id = req.params.id;
@@ -131,8 +137,6 @@ const updateUser = async(req,res) => {
         await User.find().where("_id").equals(`${id}`).exec().then((singleUser) => {
             imageName = singleUser[0].image
         })
-
-        //*********************** */
         
         //Burada header kısmını kaldırıp base64 yapısındaki resmi png formatına cevirdik.
         let base64Image = req.body.image.split(';base64,').pop();
@@ -146,8 +150,6 @@ const updateUser = async(req,res) => {
             console.log('File created');
         });
         
-        //************************/
-
         let data = {
             name:req.body.name,
             surname:req.body.surname,
@@ -165,7 +167,8 @@ const updateUser = async(req,res) => {
         res.status(404).json(e)
     }
 }
-
+//**************ADD - NEW - USER ******************/
+//Yeni kullanıcı ekleme işlemi...
 const addNewUser = async(req, res) => {
     console.log("yeni kullanıcı için istek");
     //Buraya işlem başarılı ise response ok şeklinde bir ekleme yapılacak ya da status code üzerinden kontrol yapılacak

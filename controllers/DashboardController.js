@@ -1,6 +1,9 @@
 const mongoose = require("mongoose")
 const Transaction = require("../models/TransactionModel")
 const User = require("../models/UserModel")
+
+//*******************ADD TRANSACTION*****************//
+//Yapılan işlemleri kaydedecek fonk.
 const addTransaction = (req,res) => {
 
     console.log("İşlem eklemek için istek atıldı");
@@ -21,6 +24,8 @@ const addTransaction = (req,res) => {
     }
 }
 
+//************ ALL TRANSACTION *********************//
+//Yapılan tüm işlemleri veren fonk.
 const getAllTransaction = async (req,res) => {
     let data ;
     console.log("İşlemleri çekmek için istek atıldı");
@@ -43,7 +48,9 @@ const getAllTransaction = async (req,res) => {
 
     }
 }
-//USER - GENDER
+
+//******************USER - GENDER******************//
+//Kullanıcı cinsiyet dağılımını veren fonks.
 const userGender = async (req,res) => {
     let womanCounder = 0
     let manCounter = 0
