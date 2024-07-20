@@ -9,79 +9,26 @@ const fs = require("fs")
 //*************SIGN UP*******************//
 //Giriş yapan kullanıcının detay bilgileri.
 const userDetail = async(req,res) => {
-    //Refresh token ile toke yer değiştirilebilir.
     console.log("Giriş yapan kullanıcıya ait detay sayfası.")
+    const id = req.id
+    let data = null
 
-    const token = req.cookies.jwt
-    const token_refresh = req.cookies.jwt_refresh
-    //console.log("REFRESH TOKEN::"+token_refresh);
-    //REFRESH TOKEN DECODE 
-
-    if( !token){
-        res.status(401).json({
-            succeded:false,
-            message:"No token "
-        })
+   
+    await User.findOne({_id:id}).then((user) => {
+        // console.log(user);
+        let bitmap = fs.readFileSync(__dirname+"/.."+user.image);
+        let base64 = Buffer.from(bitmap).toString("base64") 
+        user.image = `data:image/png;base64,${base64}`
+        data = user
+    })
+    if(data === null){
+        console.log("Kullanıcı bulunamadı");
+        res.status(402).json({message:"user not found"})
     }else{
-        //const userToken = jwt.decode(token,process.env.ACCES_TOKEN_SECRET)
-       
-       //Token süresinin bitip bitmediği kontrol edildi.
-       //Buradaki işlem token a ait değerleri kontrol eder ve süresinin dolup dolmadığını kontrol eder.
-       jwt.verify(token,process.env.ACCES_TOKEN_SECRET,async(err,decodedToken)=>{
-        if(err){
-            if(token_refresh){
-                console.log("Kullanıcı token süresi doldu refresh token ile yeniden güncellendi");
-                jwt.verify(token_refresh,process.env.REFRESH_TOKEN_SECRET,async(err,decodeRefreshToken) => {
-                    console.log("REFRESH TOKEN ERR:::"+err);
-                    if(err){
-                        console.log("Refresh token time out");
-                        res.status(401).json(err)
-                    }else{
-                        const userAccessToken = Token(decodeRefreshToken._id) 
-                        res.cookie("jwt",userAccessToken,{
-                            httpOnly:true,
-                            maxAge: 1000 * 60 * 60 * 24
-                        })
-                        try{
-                            await User.find().where("_id").equals(`${decodeRefreshToken.id}`).exec().then((singleUser) => {
-                                    singleUser.forEach((item) => {
-                                        let bitmap = fs.readFileSync(__dirname+"/.."+item.image);
-                                        let base64 = Buffer.from(bitmap).toString("base64") 
-                                        //console.log(__dirname+item.image);
-                                        item.image = `data:image/png;base64,${base64}`
-                                        //console.log(item.image);
-                                    } )
-                                    data = singleUser
-                                })
-                                res.status(201).json(data)
-                            }catch(e){
-                                console.log(e);
-                                res.status(404).json(e)
-                            } 
-                    }
-                })
-            }
-        }else{
-            console.log('Decoded token:', decodedToken);
-            try{
-                await User.find().where("_id").equals(`${decodedToken.id}`).exec().then((singleUser) => {
-                    singleUser.forEach((item) => {
-                        let bitmap = fs.readFileSync(__dirname+"/.."+item.image);
-                        let base64 = Buffer.from(bitmap).toString("base64") 
-                        //console.log(__dirname+item.image);
-                        item.image = `data:image/png;base64,${base64}`
-                        //console.log(item.image);
-                    } )
-                    data = singleUser
-                })
-                res.status(201).json(data)
-            }catch(e){
-                console.log(e);
-                res.status(404).json(e)
-            }       
-        }
-       })    
-    }
+        console.log("Kullanıcı bulundu");
+        res.status(201).json(data)
+    } 
+    
 }
 
 //**************SIGN IN**************//
@@ -123,7 +70,7 @@ const userSignIn = async(req,res) => {
         //Hata kodu düzenlenecek
         if(signInUser === null ){
             console.log("Kullanıcı bulunamadı");
-            res.status(201).json("Kullanici Bulunamadi")    
+            res.status(402).json("Kullanici Bulunamadi")    
         }        
     })
 }
@@ -132,7 +79,7 @@ const userSignIn = async(req,res) => {
 //token oluşturma işlemi ve süresinin belirlenmesi
 const Token = (userID) => {
     return jwt.sign({id : userID},process.env.ACCES_TOKEN_SECRET,{
-        expiresIn: "1d"
+        expiresIn: "10s"
         
     })
 }
