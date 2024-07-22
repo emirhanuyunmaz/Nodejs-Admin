@@ -4,16 +4,13 @@ const User = require("../models/UserModel")
 
 const fs = require("fs")
 
-//Refresh token veri tabanına kaydedilerek oradan da kontrol yapılabilir.  
-
-//*************SIGN UP*******************//
+//*************USER DETAIL*******************//
 //Giriş yapan kullanıcının detay bilgileri.
 const userDetail = async(req,res) => {
     console.log("Giriş yapan kullanıcıya ait detay sayfası.")
     const id = req.id
     let data = null
 
-   
     await User.findOne({_id:id}).then((user) => {
         // console.log(user);
         let bitmap = fs.readFileSync(__dirname+"/.."+user.image);
@@ -21,6 +18,7 @@ const userDetail = async(req,res) => {
         user.image = `data:image/png;base64,${base64}`
         data = user
     })
+
     if(data === null){
         console.log("Kullanıcı bulunamadı");
         res.status(402).json({message:"user not found"})
@@ -28,7 +26,6 @@ const userDetail = async(req,res) => {
         console.log("Kullanıcı bulundu");
         res.status(201).json(data)
     } 
-    
 }
 
 //**************SIGN IN**************//
@@ -49,13 +46,13 @@ const userSignIn = async(req,res) => {
                 const userAccessToken = Token(item._id) 
                 const userRefreshToken = TokenRefresh(item._id) 
             
-                //Token cookie yazılmasın işlemi..
+                //Token cookie yazılmasın işlemi...
                 res.cookie("jwt",userAccessToken,{
                     httpOnly:true,
                     maxAge: 1000 * 60 * 60 * 24
                 })
 
-                //Refresh token cookie kaydetme işlemi.
+                //Refresh token cookie kaydetme işlemi...
                 res.cookie("jwt_refresh",userRefreshToken,{
                     httpOnly:true,
                     maxAge: 1000 * 60 * 60 * 24
@@ -67,20 +64,19 @@ const userSignIn = async(req,res) => {
                 })
             }
         })
-        //Hata kodu düzenlenecek
+        
         if(signInUser === null ){
             console.log("Kullanıcı bulunamadı");
-            res.status(402).json("Kullanici Bulunamadi")    
+            res.status(402).json({message:"Kullanici Bulunamadi"})    
         }        
     })
 }
 
 //******************CREATE - TOKEN*********************//
-//token oluşturma işlemi ve süresinin belirlenmesi
+//Token oluşturma işlemi ve süresinin belirlenmesi
 const Token = (userID) => {
     return jwt.sign({id : userID},process.env.ACCES_TOKEN_SECRET,{
-        expiresIn: "10s"
-        
+        expiresIn: "7d"
     })
 }
 
