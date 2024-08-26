@@ -78,4 +78,50 @@ const userGender = async (req,res) => {
     }
 }
 
-module.exports = {addTransaction , getAllTransaction , userGender}
+const orderNameDashboard = async(req,res) => {
+    let data ;
+    console.log("İşlemleri sıralama için istek atıldı");
+    let q = req.params.q
+    console.log("TRANSACTION Q::"+q);
+    if(q !== "All"){
+        try{
+            await Transaction.find().sort({name:1}).sort("-transactionTime").exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
+    }else{
+        try{
+            await Transaction.find().sort("-transactionTime").sort({name:1}).exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
+
+    }
+}
+
+const orderEmailDashboard = async(req,res) => {
+    let data ;
+    console.log("İşlemleri sıralama için istek atıldı");
+    let q = req.params.q
+    console.log("TRANSACTION Q::"+q);
+    if(q !== "All"){
+        try{
+            await Transaction.find().sort({email:1}).sort("-transactionTime").exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
+    }else{
+        try{
+            await Transaction.find().sort("-transactionTime").sort({email:1}).exec().then((dataList) => data = dataList).catch(() => console.log("data get err"))
+            res.status(201).json(data)
+        }catch(e){
+            res.status(404).json(e)
+        }
+
+    }
+}
+
+module.exports = {addTransaction , getAllTransaction , userGender , orderEmailDashboard , orderNameDashboard}

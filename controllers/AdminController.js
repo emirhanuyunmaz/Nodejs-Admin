@@ -208,4 +208,69 @@ const addNewUser = async(req, res) => {
     }
 }
 
-module.exports = {allDataSearch , getAllData , getUsersLength , singleUser , deleteUser , updateUser , addNewUser}
+//****************** EMAIL - ORDER *****************/
+//Kullanıcı mail adresine göre sıralama işlemi
+const orderEmailUser = async (req,res) =>{
+    console.log("Kullanıcı email bilgilerine göre sıralama işlemi...");
+    
+    try{
+        let data 
+        //console.log(req.params.page);
+        const page = req.params.page
+        // console.log(page);
+        //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
+        //skip fonk başlangıç değerini belirler.
+        //limit fonk kaç adet çekileceğini belirler.
+        if(page > 0){
+            await User.find().skip((page-1)*6).limit(6).sort({email:1}).then((users) => {
+                // console.log(users);
+                users.forEach((item) => {
+                    let bitmap = fs.readFileSync(__dirname+"/.."+item.image);
+                    let base64 = Buffer.from(bitmap).toString("base64") 
+                    //console.log(__dirname+item.image);
+                    item.image = `data:image/png;base64,${base64}`
+                    //console.log(item.image);
+                } )
+                data = users
+            })
+        }
+        res.status(200).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+    
+}
+
+const orderNameUser = async (req,res) =>{
+    console.log("Kullanıcı email bilgilerine göre sıralama işlemi...");
+    
+    try{
+        let data 
+        //console.log(req.params.page);
+        const page = req.params.page
+        // console.log(page);
+        //Burada resmi tekrar base64 formatına çevirdik ve resmi gösterme işlemi sağlanmış oldu
+        //skip fonk başlangıç değerini belirler.
+        //limit fonk kaç adet çekileceğini belirler.
+        if(page > 0){
+            await User.find().skip((page-1)*6).limit(6).sort({name:1,surname:1}).then((users) => {
+                // console.log(users);
+                users.forEach((item) => {
+                    let bitmap = fs.readFileSync(__dirname+"/.."+item.image);
+                    let base64 = Buffer.from(bitmap).toString("base64") 
+                    //console.log(__dirname+item.image);
+                    item.image = `data:image/png;base64,${base64}`
+                    //console.log(item.image);
+                } )
+                data = users
+            })
+        }
+        res.status(200).json(data)
+    }catch(e){
+        res.status(404).json(e)
+    }
+    
+}
+
+
+module.exports = {allDataSearch , getAllData , getUsersLength , singleUser , deleteUser , updateUser , addNewUser , orderEmailUser , orderNameUser}

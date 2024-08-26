@@ -13,6 +13,14 @@ router.route("/data").post(adminFuction.addNewUser)
 //Tüm kullanıcıların sayısını veren ve sayfalama da kullanılan yapı
 router.route("/data/length").get(adminFuction.getUsersLength)
 
+//GET USER EMAIL ORDER
+//Tüm kullanıcıları email adreslerine göre harflere göre sıralama işlemi...
+router.route("/data/emailOrder/:page").get(adminFuction.orderEmailUser)
+
+//GET USER NAME ORDER
+//Tüm kullanıcıları email adreslerine göre harflere göre sıralama işlemi...
+router.route("/data/nameOrder/:page").get(adminFuction.orderNameUser)
+
 //ADMIN
 //SEARCH
 //DB içerisindeki tüm verilerin çekilmesi işlemi ...
