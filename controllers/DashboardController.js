@@ -64,9 +64,9 @@ const userGender = async (req,res) => {
         await User.find().then((dataList) => {
             dataList.forEach((item) => {
                 if(item.gender === 0){
-                    womanCounder ++ 
-                }else{
                     manCounter ++
+                }else{
+                    womanCounder ++ 
                 }
             })
             data.man = manCounter

@@ -21,6 +21,10 @@ router.route("/data/emailOrder/:page").get(adminFuction.orderEmailUser)
 //Tüm kullanıcıları email adreslerine göre harflere göre sıralama işlemi...
 router.route("/data/nameOrder/:page").get(adminFuction.orderNameUser)
 
+//GET USER PASSWORD ORDER
+//Tüm kullanıcıları email adreslerine göre harflere göre sıralama işlemi...
+router.route("/data/passwordOrder/:page").get(adminFuction.orderPasswordUser)
+
 //ADMIN
 //SEARCH
 //DB içerisindeki tüm verilerin çekilmesi işlemi ...
@@ -31,6 +35,14 @@ router.route("/data/allData/:search").get(adminFuction.allDataSearch)
 router.route("/data/user/:id").get(adminFuction.singleUser)
 
 //ADMIN
+//SINGLE USER - IMAGE 
+router.route("/data/user/image/:id").get(adminFuction.getUserImage)
+
+//UPDATE
+//Kayıtlı bir kullanıcıyı güncelleme işlemi 
+router.route("/data/user/:id").post(adminFuction.updateUser)
+
+//ADMIN
 //GET ALL USER
 //Kullanıcıları listeleme işlemi...
 router.route("/data/:page").get(adminFuction.getAllData)
@@ -39,8 +51,5 @@ router.route("/data/:page").get(adminFuction.getAllData)
 //kullanıcı silme işlemi
 router.route("/data/:id").delete(adminFuction.deleteUser)
 
-//UPDATE
-//Kayıtlı bir kullanıcıyı güncelleme işlemi 
-router.route("/data/user/:id").post(adminFuction.updateUser)
 
 module.exports = router
