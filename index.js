@@ -18,8 +18,8 @@ const PORT = process.env.PORT || 5000;
 
 //middleware
 app.use(cors({credentials: true , origin: true}))//Buradaki credentials ve origin verileri sayesinde cookies verileri çekilebilmektedir.
-app.use(express.json({limit:"50mb"})) //Bu limit değerleri sayesinde verilerin belli bir boyuta kada kabul etmesini sağlar
-app.use(express.text({ limit: "200mb" }))
+app.use(express.json({limit:"500mb"})) //Bu limit değerleri sayesinde verilerin belli bir boyuta kada kabul etmesini sağlar
+app.use(express.text({ limit: "500mb" }))
 require("dotenv").config()
 app.use(cookieParser()) //Cookie işlemleri için gerekli olan middleware
 
@@ -37,6 +37,11 @@ app.use("/api/dashboard",dashboardRoute)
 //ROUTES
 const userRoute = require("./routes/UserRoute")
 app.use("/api/user",userRoute)
+
+//PRODUCT
+//ROUTES
+const productRoute = require("./routes/ProductRoutes")
+app.use("/api/product",productRoute)
 
 //SERVER RUNING
 //Server çalışması
