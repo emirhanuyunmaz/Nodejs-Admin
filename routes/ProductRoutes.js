@@ -15,6 +15,10 @@ router.route("/searchProduct/:productName").get(product.searchProductName)
 //Tüm ürünlere ait listenin gelmesi işlemi
 router.route("/productList/:page").get(product.getAllData)
 
+//GET ALL PRODUCT
+//Tüm ürünlere ait listenin gelmesi işlemi
+router.route("/updateProduct/:id").post(product.updateProduct)
+
 //PRODUCT SINGLE GET
 //Yeni bir ürün ekleme işlemi.
 router.route("/singleProduct/:id").get(product.getSingleProduct)

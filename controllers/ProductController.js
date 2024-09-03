@@ -2,7 +2,7 @@ const product = require("../models/ProductsModel")
 const uuid = require("uuid")
 const fs = require("fs")
 
-//********** ALL DATA ****************/
+//******************************ALL DATA************************************//
 //Tüm verilerin çekilmesi işlemi...
 const getAllData = async(req,res)=>{
 
@@ -35,7 +35,7 @@ const getAllData = async(req,res)=>{
     }
 }
 
-//*************** DATA LENGTH *************************/
+//******************************DATA LENGTH*********************************//
 //Ürün sayısını veren yapı . (Sayfalama işlemi için.)
 const getAllDataLength = async(req,res) => {
     console.log("Tüm ürünlerin sayısı için istek atıldı.");
@@ -58,7 +58,7 @@ const getAllDataLength = async(req,res) => {
     }
 }
 
-//*****************NEW PRODUCT******************/
+//******************************NEW PRODUCT*********************************//
 //Ürün ekleme işlemi
 const newProduct = async (req,res) => {
     console.log("yeni ürün için istek");
@@ -101,7 +101,8 @@ const newProduct = async (req,res) => {
         res.status(404).json(e)
     }
 }
-//***************************SINGLE PRODUCT************************//
+
+//*******************************SINGLE PRODUCT*****************************//
 //Bir adet kullanıcı çekme işlemi.
 const getSingleProduct = async (req,res) => {
     const id = req.params.id
@@ -132,7 +133,7 @@ const getSingleProduct = async (req,res) => {
     // res.end()
 }
 
-//*****************PRODUCT IMAGE DELETE*********************//
+//****************************PRODUCT IMAGE DELETE**************************//
 //Bir ürüne ait bir resmin silinmesi işlemi.
 const deleteSingleProductImages = async (req,res) => {
     console.log("Ürüne ait resmi silmek için istek atıldı");
@@ -172,7 +173,7 @@ const deleteSingleProductImages = async (req,res) => {
     }
 }
 
-//**********************DELETE PRODUCT**************************//
+//***************************DELETE PRODUCT*********************************//
 //Bir ürünün tamamen silinmesi işlemi.
 const deleteProduct = async(req,res) => {
     const id = req.params.id 
@@ -184,7 +185,7 @@ const deleteProduct = async(req,res) => {
             for(let j = 0 ; j < pr[0].images.length ; j++){
                 // console.log(pr[0].images[j]);
                 //Bu işlem sayesinde veritabanından silinen ürün aynı zamanda dosya olarak ta siliniyor.
-                fs.rmSync(__dirname+"/.."+pr[0].images[j])
+                fs.rmSync(__dirname+"/.."+pr[0].images[j].image)
             }
         })
 
@@ -196,7 +197,7 @@ const deleteProduct = async(req,res) => {
     }
 }
 
-//**********************GET PRODUCT IMAGES *****************************//
+//**********************GET PRODUCT IMAGES**********************************//
 //Bir ürüne ait resimlerin listesini alma işlemi ...
 const getImage = async (req,res) => {
     const id = req.params.id
@@ -250,9 +251,9 @@ const getImage = async (req,res) => {
     res.end()
 }
 
-//**************************SEARCH PRODUCT******************************//
+//**************************SEARCH PRODUCT**********************************//
 //Bir ürünün adına göre aranması işlemi.
-const searchProductName = async(req,res) => {
+const searchProductName = async (req,res) => {
     // Ürün ismine göre arama işlemi ...
     let data = []
     //Arama işlemi ile gelen veriyi alır.
@@ -280,4 +281,42 @@ const searchProductName = async(req,res) => {
     }
 }
 
-module.exports = { newProduct , getAllData , getSingleProduct , getImage , deleteSingleProductImages ,deleteProduct , getAllDataLength , searchProductName }
+//****************************UPDATE PRODUCT********************************//
+//Ürün güncelleme işlemi .
+const updateProduct = async(req,res) => {
+    const productID = req.params.id
+    console.log(productID);
+    console.log("Ürün güncelleme isteği");
+    
+    //Ürün id si ile verilerin güncellemesi işlemi.
+
+    const name = req.body.name
+    const price = req.body.price
+    const amount = req.body.amount
+    const personId = req.body.personId
+
+    // console.log("Name:",name)
+    // console.log("Price:",price)
+    // console.log("Amount:",amount);
+    // console.log("PersonId:",personId);
+    
+    try{
+
+        let data = {
+            name:name,
+            price:price,
+            amount:amount,
+            personId:personId
+        }
+        await product.findByIdAndUpdate({_id:productID},data)
+        res.status(201).json(data)
+
+    }catch(e){
+        console.log("Ürün güncellerken bir hata ile karşılaşıldı .",e);
+        
+        res.status(404).json(e)
+    }
+}
+
+
+module.exports = { newProduct , getAllData , getSingleProduct , getImage , deleteSingleProductImages ,deleteProduct , getAllDataLength , searchProductName , updateProduct}

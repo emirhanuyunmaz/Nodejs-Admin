@@ -3,7 +3,7 @@ const User = require("../models/UserModel")
 const fs = require("fs")
 const uuid = require("uuid")
 
-//*********USER - LENGTH********************/
+//*********USER - LENGTH********************//
 //Kullanıcı sayısını veren fonk.
 const getUsersLength = async(req,res)=>{
     try{
@@ -17,7 +17,7 @@ const getUsersLength = async(req,res)=>{
     }
 }
 
-//************DATA-SEARCH*************/
+//************DATA-SEARCH*************//
 //Kullanıcı içerisinden yazılan karaktere göre arama yapan fonk. 
 const allDataSearch = async(req,res) => {
     let data = []
@@ -49,6 +49,7 @@ const allDataSearch = async(req,res) => {
         res.status(404).json(e)
     }
 }
+
 //***************ALL-DATA*********************/
 //Tüm kullanıcıların çekildiği ve sayfalama yapılarak verilerin çekilmesi...
 const getAllData = async(req,res)=>{
@@ -80,7 +81,8 @@ const getAllData = async(req,res)=>{
         res.status(404).json(e)
     }
 }
-//**************SINGLE - USER *******************/
+
+//**************SINGLE - USER *******************//
 //Parametre olarak gelen ID bilgisine göre kullanıcıyı çeken fonk. 
 const singleUser = async(req,res) => {
     console.log("kullanıcı detay sayfası için veri");
@@ -201,7 +203,8 @@ const updateUser = async(req,res) => {
         res.status(404).json(e)
     }
 }
-//**************ADD - NEW - USER ******************/
+
+//**************ADD - NEW - USER******************/
 //Yeni kullanıcı ekleme işlemi...
 const addNewUser = async(req, res) => {
     console.log("yeni kullanıcı için istek");
@@ -307,7 +310,6 @@ const orderEmailUser = async (req,res) =>{
     }catch(e){
         res.status(404).json(e)
     }
-    
 }
 
 //***************** NAME ORDER ****************/
@@ -373,7 +375,6 @@ const orderPasswordUser = async (req,res) =>{
     }catch(e){
         res.status(404).json(e)
     }
-    
 }
 
 
